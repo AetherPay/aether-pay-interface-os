@@ -1,0 +1,5 @@
+{
+  "name": "AetherPay Dashboard",
+  "description": "A high-performance, multi-tenant payment platform dashboard featuring real-time analytics, transaction management, and architecture verification.",
+  "requestFramePermissions": []
+}
