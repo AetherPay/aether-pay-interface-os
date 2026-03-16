@@ -14,7 +14,6 @@ import KYCView from './components/KYCView';
 import ComplianceView from './components/ComplianceView';
 import SupportView from './components/SupportView';
 import NetworkView from './components/NetworkView';
-import DevApiView from './components/DevApiView';
 import FinanceView from './components/FinanceView';
 import ReportingView from './components/ReportingView';
 import SystemAdminView from './components/SystemAdminView';
@@ -28,6 +27,7 @@ import AetherShipView from './components/AetherShipView';
 // Data
 import { architectureChecklist } from './services/mockData';
 import { AlertTriangle, X } from 'lucide-react';
+import DevApiView from './components/engineering/DevApiView';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
