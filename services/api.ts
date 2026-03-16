@@ -206,6 +206,31 @@ export const settlementsApi = {
     }),
 };
 
+// ==================== WEBHOOKS ====================
+
+export interface WebhookFilters {
+  status?: string;
+  siteId?: string;
+  merchantId?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export const webhooksApi = {
+  list: (filters: WebhookFilters = {}) => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined) params.append(key, String(value));
+    });
+    return apiFetch<any>(`/v1/admin/webhooks?${params}`);
+  },
+
+  replay: (id: string) =>
+    apiFetch<any>(`/v1/admin/webhooks/${id}/replay`, {
+      method: 'POST',
+    }),
+};
+
 // ==================== AUDIT LOGS ====================
 
 export interface AuditFilters {
@@ -271,6 +296,7 @@ export const api = {
   dashboard: dashboardApi,
   merchants: merchantsApi,
   transactions: transactionsApi,
+  webhooks: webhooksApi,
   users: usersApi,
   rbac: rbacApi,
   treasury: treasuryApi,

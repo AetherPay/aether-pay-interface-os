@@ -26,29 +26,16 @@ import TreasuryView from './components/TreasuryView';
 import AetherShipView from './components/AetherShipView';
 
 // Data
-import { generateTransactions, warRoomKPIs, chartData, architectureChecklist, liveFeedData } from './services/mockData';
+import { architectureChecklist } from './services/mockData';
 import { AlertTriangle, X } from 'lucide-react';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentView, setView] = useState<ViewState>('COMMAND_GLOBAL_OVERVIEW');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [data, setData] = useState(generateTransactions(20));
   const [isImpersonating, setImpersonating] = useState(false);
   const [isDarkMode, setDarkMode] = useState(document.documentElement.classList.contains('dark'));
 
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    
-    const interval = setInterval(() => {
-      setData(prev => {
-        const newTxn = generateTransactions(1)[0];
-        return [newTxn, ...prev.slice(0, 19)];
-      });
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [isAuthenticated]);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -70,7 +57,7 @@ function App() {
   
   const renderContent = () => {
     if (currentView.startsWith('COMMAND_')) {
-      return <DashboardView kpis={warRoomKPIs} chartData={chartData} liveFeedData={liveFeedData} transactions={data} setView={setView} currentView={currentView} />;
+      return <DashboardView setView={setView} currentView={currentView} />;
     }
 
     if (currentView.startsWith('RISK_')) return <RiskView currentView={currentView} />;
@@ -105,7 +92,7 @@ function App() {
       case 'SETTINGS': return <SettingsView />;
       case 'PROFILE': return <ProfileView />;
       case 'CHECKLIST': return <Checklist items={architectureChecklist as any} />;
-      default: return <DashboardView kpis={warRoomKPIs} chartData={chartData} liveFeedData={liveFeedData} transactions={data} setView={setView} currentView={currentView} />;
+      default: return <DashboardView setView={setView} currentView={currentView} />;
     }
   };
 

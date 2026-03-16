@@ -1,23 +1,84 @@
-import React, { useState } from 'react';
-import { 
-  Server, Activity, Zap, Terminal, GitBranch, Cpu, Database, 
+import React, { useState, useEffect } from 'react';
+import {
+  Server, Activity, Zap, Terminal, GitBranch, Cpu, Database,
   Search, ShieldCheck, Play, Power, Rocket, RefreshCw, BarChart3, Globe,
   CheckCircle2, AlertTriangle, XCircle, MoreHorizontal, Clock, Filter,
   History, Hash, ExternalLink, Code, Radio
 } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { mockServices, chartData, mockDeployments, mockWebhookLogs } from '../services/mockData';
-import { Service, WebhookLog, Deployment } from '../types';
+import { mockServices, chartData, mockDeployments } from '../services/mockData';
+import { Service, Deployment } from '../types';
+import { webhooksApi } from '../services/api';
 
 interface DevApiViewProps {
   currentView: any;
 }
 
+interface RealWebhookEvent {
+  id: string;
+  eventType: string;
+  status: string;
+  attempts: number;
+  lastAttempt: string | null;
+  nextRetry: string | null;
+  createdAt: string;
+  siteId: string;
+  siteName: string;
+  webhookUrl: string | null;
+  merchantId: string;
+  merchantName: string;
+}
+
+const WEBHOOK_STATUS_META: Record<string, { label: string; cls: string }> = {
+  delivered: { label: 'Livré',      cls: 'bg-green-50 text-green-600' },
+  failed:    { label: 'Échec',      cls: 'bg-red-50 text-red-600 animate-pulse' },
+  pending:   { label: 'En attente', cls: 'bg-amber-50 text-amber-600' },
+};
+
 const DevApiView: React.FC<DevApiViewProps> = ({ currentView }) => {
   const [toast, setToast] = useState<string | null>(null);
   const [services, setServices] = useState<Service[]>(mockServices);
-  const [webhooks, setWebhooks] = useState<WebhookLog[]>(mockWebhookLogs);
   const [deployments, setDeployments] = useState<Deployment[]>(mockDeployments);
+
+  // ENG_WEBHOOK_MONITOR — real data
+  const [webhooks, setWebhooks] = useState<RealWebhookEvent[]>([]);
+  const [webhooksTotal, setWebhooksTotal] = useState(0);
+  const [webhooksLoading, setWebhooksLoading] = useState(false);
+  const [webhooksError, setWebhooksError] = useState<string | null>(null);
+  const [webhookStatusFilter, setWebhookStatusFilter] = useState('');
+  const [replayingId, setReplayingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (currentView !== 'ENG_WEBHOOK_MONITOR') return;
+    loadWebhooks();
+  }, [currentView, webhookStatusFilter]);
+
+  const loadWebhooks = async () => {
+    setWebhooksLoading(true);
+    setWebhooksError(null);
+    try {
+      const res = await webhooksApi.list({ status: webhookStatusFilter || undefined, limit: 50 });
+      setWebhooks(res.events ?? []);
+      setWebhooksTotal(res.total ?? 0);
+    } catch (err) {
+      setWebhooksError(err instanceof Error ? err.message : 'Erreur de chargement');
+    } finally {
+      setWebhooksLoading(false);
+    }
+  };
+
+  const handleReplay = async (id: string) => {
+    setReplayingId(id);
+    try {
+      await webhooksApi.replay(id);
+      triggerToast(`Webhook ${id.slice(0, 8)}… rejoué avec succès.`);
+      await loadWebhooks();
+    } catch (err) {
+      triggerToast(`Échec du replay : ${err instanceof Error ? err.message : 'Erreur'}`);
+    } finally {
+      setReplayingId(null);
+    }
+  };
 
   const triggerToast = (msg: string) => {
     setToast(msg);
@@ -95,49 +156,123 @@ const DevApiView: React.FC<DevApiViewProps> = ({ currentView }) => {
 
   const WebhookMonitor = () => (
     <div className="space-y-6 animate-in slide-in-from-top-4 duration-500">
-       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[32px] overflow-hidden shadow-sm">
-          <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex justify-between items-center">
-             <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] italic flex items-center gap-2">
-                <Radio size={14} className="text-indigo-500 animate-pulse" /> Outbound Dispatch Trace
-             </h3>
-             <div className="flex gap-2">
-                <div className="relative">
-                   <input type="text" placeholder="Search merchant or event..." className="pl-8 pr-3 py-1.5 text-[10px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none" />
-                   <Search className="absolute left-2.5 top-2 h-3 w-3 text-slate-400" />
-                </div>
-                <button className="p-2 text-slate-400 hover:text-indigo-600 transition-all"><Filter size={14}/></button>
-             </div>
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[32px] overflow-hidden shadow-sm">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex flex-wrap gap-3 justify-between items-center">
+          <div className="flex items-center gap-3">
+            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] italic flex items-center gap-2">
+              <Radio size={14} className="text-indigo-500 animate-pulse" /> Outbound Dispatch Trace
+            </h3>
+            <span className="text-[9px] font-black text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+              {webhooksTotal} événement{webhooksTotal !== 1 ? 's' : ''}
+            </span>
           </div>
+          <div className="flex gap-2 items-center">
+            <select
+              value={webhookStatusFilter}
+              onChange={(e) => setWebhookStatusFilter(e.target.value)}
+              className="text-[10px] font-black bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 outline-none uppercase"
+            >
+              <option value="">Tous</option>
+              <option value="failed">Échecs</option>
+              <option value="delivered">Livrés</option>
+              <option value="pending">En attente</option>
+            </select>
+            <button
+              onClick={loadWebhooks}
+              className="p-2 text-slate-400 hover:text-indigo-600 transition-all"
+            >
+              <RefreshCw size={14} className={webhooksLoading ? 'animate-spin' : ''} />
+            </button>
+          </div>
+        </div>
+
+        {webhooksError && (
+          <div className="p-6 text-center">
+            <p className="text-xs text-red-500 font-mono mb-3">{webhooksError}</p>
+            <button onClick={loadWebhooks} className="px-4 py-2 bg-indigo-600 text-white text-[10px] font-black uppercase rounded-xl">
+              Réessayer
+            </button>
+          </div>
+        )}
+
+        {!webhooksError && (
           <table className="w-full text-left">
-             <thead className="bg-white dark:bg-slate-900"><tr className="text-[9px] font-black text-slate-400 uppercase border-b border-slate-100 dark:border-slate-800"><th className="px-6 py-4">Trace Node</th><th className="px-6 py-4">Event Type</th><th className="px-6 py-4">Status</th><th className="px-6 py-4 text-center">Attempt</th><th className="px-6 py-4 text-right">Dispatch</th></tr></thead>
-             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {webhooks.map(log => (
-                   <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                      <td className="px-6 py-4">
-                         <p className="text-xs font-black text-slate-900 dark:text-white uppercase italic tracking-tight">{log.merchantName}</p>
-                         <p className="text-[9px] font-mono text-indigo-400 uppercase">{log.id} • {log.timestamp}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                         <span className="text-[10px] font-black font-mono text-slate-500 dark:text-slate-400">{log.event}</span>
-                         <p className="text-[8px] text-slate-400 truncate max-w-[200px] mt-1">{log.url}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                         <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
-                            log.status >= 200 && log.status < 300 ? 'bg-green-50 text-green-600' : 
-                            log.status >= 500 ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600'
-                         }`}>{log.status}</span>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                         <span className={`text-xs font-black italic ${log.attempt > 1 ? 'text-amber-500' : 'text-slate-400'}`}>#{log.attempt}</span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                         <button onClick={() => triggerToast(`Inspecting payload for ${log.id}...`)} className="p-1.5 text-slate-400 hover:text-indigo-600 transition-all"><Terminal size={16}/></button>
-                      </td>
-                   </tr>
-                ))}
-             </tbody>
+            <thead className="bg-white dark:bg-slate-900">
+              <tr className="text-[9px] font-black text-slate-400 uppercase border-b border-slate-100 dark:border-slate-800">
+                <th className="px-6 py-4">Marchand / Site</th>
+                <th className="px-6 py-4">Événement paiement</th>
+                <th className="px-6 py-4">Envoi webhook</th>
+                <th className="px-6 py-4 text-center">Tentatives</th>
+                <th className="px-6 py-4">Date</th>
+                <th className="px-6 py-4 text-right">Replay</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {webhooksLoading && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-xs text-slate-400">
+                    <RefreshCw size={16} className="animate-spin mx-auto mb-2" />
+                    Chargement...
+                  </td>
+                </tr>
+              )}
+              {!webhooksLoading && webhooks.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-16 text-center">
+                    <CheckCircle2 size={32} className="mx-auto text-green-500 mb-3 opacity-50" />
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                      Aucun événement webhook
+                    </p>
+                  </td>
+                </tr>
+              )}
+              {!webhooksLoading && webhooks.map((evt) => {
+                const statusMeta = WEBHOOK_STATUS_META[evt.status] ?? { label: evt.status, cls: 'bg-slate-100 text-slate-500' };
+                const paymentOk = evt.eventType.includes('completed');
+                return (
+                  <tr key={evt.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                    <td className="px-6 py-4">
+                      <p className="text-xs font-black text-slate-900 dark:text-white uppercase italic tracking-tight">{evt.merchantName}</p>
+                      <p className="text-[9px] font-mono text-indigo-400">{evt.siteName}</p>
+                      <p className="text-[8px] text-slate-400 truncate max-w-[180px] mt-0.5">{evt.webhookUrl ?? '—'}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-black font-mono ${paymentOk ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
+                        {evt.eventType}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-black ${statusMeta.cls}`}>
+                        {statusMeta.label}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`text-xs font-black italic ${evt.attempts > 1 ? 'text-amber-500' : 'text-slate-400'}`}>
+                        #{evt.attempts}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-[9px] font-mono text-slate-400">
+                      {new Date(evt.createdAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => handleReplay(evt.id)}
+                        disabled={replayingId === evt.id || evt.status === 'delivered'}
+                        title={evt.status === 'delivered' ? 'Déjà livré' : 'Rejouer'}
+                        className="p-1.5 text-slate-400 hover:text-indigo-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        {replayingId === evt.id
+                          ? <RefreshCw size={14} className="animate-spin" />
+                          : <History size={14} />}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
           </table>
-       </div>
+        )}
+      </div>
     </div>
   );
 
