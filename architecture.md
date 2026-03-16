@@ -38,6 +38,34 @@ L'UI affiche une carte sombre avec des points de lumière dont la couleur indiqu
 En cliquant sur un nœud, une barre latérale détaille les statistiques de santé du fournisseur local.
 C'est l'outil de diagnostic géographique du système.
 
+**Description: Implémentation actuelle — Diagramme de topologie réseau (React Flow)**
+
+La vue affiche un graphe de topologie interactif style Datadog Service Map représentant les 12 passerelles de paiement actives d'AetherPay.
+
+Chaque nœud est une **card provider** affichant : le nom du fournisseur (Stripe, MTN MoMo, Orange Money, Wave, USDC · Circle), la localisation géographique (ex. Dakar · Sénégal), la latence RTT en millisecondes mise à jour toutes les 2 secondes, un badge de statut (Nominal / Dégradé / Critique), et une barre d'uptime colorée.
+
+Le **nœud central AetherPay Gateway Hub** agrège les compteurs globaux UP / DEG / DOWN en temps réel. Tous les nœuds provider lui sont reliés par des edges bezier colorés selon la latence : vert < 150 ms, orange 150–400 ms, rouge > 400 ms. Les edges des nœuds dégradés ou hors ligne affichent un point animé qui se déplace le long de la connexion.
+
+Cliquer sur un nœud ouvre un **panneau de détail** à droite : RTT actuel en grand, statut, uptime, taux de succès, latence de base, et un sparkline des 24 dernières mesures RTT.
+
+La latence est simulée côté frontend (bruit aléatoire toutes les 2 s + spike aléatoire toutes les 20–60 s) en attendant un endpoint backend `/v1/admin/health/providers`. Les positions des nœuds sont persistées en `localStorage` (clé `aetherpay:live-map:positions`) pour retrouver le layout entre les rechargements de page. Les nœuds sont déplaçables librement. Une minimap et des contrôles de zoom sont disponibles en bas à gauche.
+
+ AetherPay est disponible dans → Sénégal, Mali, Burkina, Côte d'Ivoire, Togo, Bénin, Ghana, Nigeria, Cameroun, Gabon,
+  Congo, Kenya
+
+  Par provider, on n'affiche que les nœuds là où :
+  1. Le provider est actif dans ce pays (MTN n'est pas partout, Wave c'est surtout SN + CI)
+  2. On a effectivement intégré ce corridor côté backend
+
+  Donc par exemple :
+  - Wave → uniquement SN + CI (c'est tout ce qu'ils couvrent)
+  - Orange Money → SN, ML, CI (pas partout)
+  - MTN MoMo → CI, CM, GH, SN, NG...
+  - Stripe → endpoint EU (Ireland) + US pour la diaspora
+
+
+
+
 **Alerts (`COMMAND_ALERTS`)**
 Ce centre de notification centralise les anomalies financières et techniques détectées par le bus d'événements.
 Techniquement, il trie les signaux provenant de Cortex (Risque) et du Shadow Balance selon leur sévérité.

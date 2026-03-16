@@ -24,6 +24,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, toggleS
       items: [
         { id: 'COMMAND_GLOBAL_OVERVIEW', label: 'Global Overview' },
         { id: 'COMMAND_LIVE_MAP', label: 'Live Transaction Map' },
+        { id: 'COMMAND_ZONE_FLUX', label: 'Zone Flux' },
         { id: 'COMMAND_ALERTS', label: 'Alerts & Incidents' },
         { id: 'COMMAND_EXECUTIVE_REPORTS', label: 'Executive Reports' },
       ]

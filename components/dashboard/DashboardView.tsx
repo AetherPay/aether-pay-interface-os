@@ -3,6 +3,7 @@ import { Terminal, MapPin, Cpu, RefreshCw, ShieldCheck, Zap } from 'lucide-react
 import { ViewState } from '../../types';
 import GlobalOverview from './GlobalOverview';
 import LiveTransactionMap from './LiveTransactionMap';
+import ZoneFlux from './ZoneFlux';
 import AlertsHub from './AlertsHub';
 import ExecutiveReports from './ExecutiveReports';
 
@@ -61,6 +62,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ setView, currentView }) =
       <div className="relative">
         {currentView === 'COMMAND_GLOBAL_OVERVIEW' && <GlobalOverview setView={setView} />}
         {currentView === 'COMMAND_LIVE_MAP' && <LiveTransactionMap />}
+        {currentView === 'COMMAND_ZONE_FLUX' && <ZoneFlux />}
         {currentView === 'COMMAND_ALERTS' && <AlertsHub />}
         {currentView === 'COMMAND_EXECUTIVE_REPORTS' && <ExecutiveReports />}
         {!currentView.startsWith('COMMAND_') && <GlobalOverview setView={setView} />}
