@@ -90,13 +90,34 @@ Le but est de coordonner les équipes ENG et OPS sans dispersion d'information.
 L'UI passe en mode haute visibilité avec une timeline interactive des actions entreprises.
 Le résultat est une résolution structurée des pannes critiques.
 
-**Zone Flux (`COMMAND_ZONE_FLUX`)**
+**Zone Flux (`COMMAND_ZONE_FLUX`)** (pour l'instant on affiche des data mock parcequ'on a pas encore beaucoup de transaction)
 Elle utilise un diagramme de Sankey dynamique pour modéliser la répartition de la valeur.
 Techniquement, elle ventile chaque transaction entre le Net Marchand, les frais réseau et la marge AetherPay.
 L'objectif est d'identifier les corridors où les frais fournisseurs absorbent trop de rentabilité.
 L'utilisateur voit des rivières d'argent dont l'épaisseur reflète le volume financier.
 En survolant un flux, une infobulle précise le pourcentage de commission de chaque intermédiaire.
 Elle permet d'optimiser les routes de paiement pour maximiser le profit.
+
+**Description : Implémentation actuelle — Diagramme de Sankey (@nivo/sankey)**
+
+Le diagramme de Sankey représente la **répartition de la valeur** pour chaque corridor de paiement. Il se lit de gauche à droite :
+
+- **Colonne gauche (Sources)** : les 5 corridors actifs — Stripe EU, MTN MoMo, Orange Money, Wave, USDC · Circle. La hauteur de chaque nœud est proportionnelle au volume traité.
+- **Flux (rivières)** : chaque corridor se divise en **3 flux** qui partent simultanément vers les 3 destinations. L'épaisseur de chaque flux est proportionnelle au montant en euros.
+- **Colonne droite (Destinations)** :
+  - **Net Marchand** (vert) : la part reversée au marchand après déduction de tous les frais. Représente ~97% du volume pour les corridors efficaces.
+  - **Frais Réseau** (rouge) : les commissions prélevées par le fournisseur (ex. 2.9% pour Stripe, 1.5% pour MTN/Orange, 1% pour Wave/USDC).
+  - **Marge AetherPay** (indigo) : la marge nette conservée par AetherPay (0.2% à 0.5% selon le corridor).
+
+**KPIs affichés en haut de la vue (4 cartes) :**
+- **Volume Total** : somme de tous les montants traités sur tous les corridors confondus.
+- **Net Marchands** : montant total effectivement reversé aux marchands après déduction des frais provider et de la marge AetherPay. Affiché avec le % du volume total.
+- **Frais Réseau** : total des commissions prélevées par les fournisseurs (Stripe, MTN, etc.). Affiché avec le % du volume total — un chiffre élevé ici signale un corridor coûteux.
+- **Marge AetherPay** : revenu net conservé par AetherPay sur l'ensemble des transactions. Affiché avec le % du volume total.
+
+**Comment lire le diagramme** : passer la souris sur un flux affiche une infobulle avec le montant exact, le % de commission (pour Frais Réseau), la marge (pour Marge AetherPay), ou l'efficacité du corridor (pour Net Marchand). Un badge d'alerte signale les corridors dont les frais fournisseur dépassent 2%.
+
+En dessous du Sankey, une **table d'efficacité** résume pour chaque corridor : volume, frais provider, marge AetherPay, net marchand, et une barre d'efficacité visuelle. Les données sont branchées sur l'endpoint backend `GET /v1/admin/flux` (agrégation des transactions complétées par méthode de paiement) avec fallback sur des données simulées si le backend est indisponible.
 
 ---
 
