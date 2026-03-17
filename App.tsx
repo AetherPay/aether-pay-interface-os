@@ -30,7 +30,9 @@ import { AlertTriangle, X } from 'lucide-react';
 import DevApiView from './components/engineering/DevApiView';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => localStorage.getItem('aetherpay:auth') === 'true'
+  );
   const [currentView, setView] = useState<ViewState>('COMMAND_GLOBAL_OVERVIEW');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isImpersonating, setImpersonating] = useState(false);
@@ -52,7 +54,7 @@ function App() {
   };
 
   if (!isAuthenticated) {
-    return <AuthLogin onAuthenticated={() => setIsAuthenticated(true)} />;
+    return <AuthLogin onAuthenticated={() => { localStorage.setItem('aetherpay:auth', 'true'); setIsAuthenticated(true); }} />;
   }
   
   const renderContent = () => {
@@ -118,7 +120,7 @@ function App() {
           toggleSidebar={toggleSidebar} 
           setView={setView} 
           currentView={currentView}
-          logout={() => setIsAuthenticated(false)}
+          logout={() => { localStorage.removeItem('aetherpay:auth'); setIsAuthenticated(false); }}
           isDarkMode={isDarkMode}
           toggleDarkMode={toggleDarkMode}
         />
