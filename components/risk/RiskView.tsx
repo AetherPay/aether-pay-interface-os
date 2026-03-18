@@ -2,6 +2,7 @@ import React from 'react';
 import { ShieldAlert } from 'lucide-react';
 import { ViewState } from '../../types';
 import RiskRadar from './RiskRadar';
+import FailureMonitor from './FailureMonitor';
 import RiskTransactionsList from './RiskTransactionsList';
 import QuarantineCenter from './QuarantineCenter';
 import RuleEngine from './RuleEngine';
@@ -28,6 +29,7 @@ const RiskView: React.FC<RiskViewProps> = ({ currentView }) => (
     </div>
     <div className="relative">
       {currentView === 'RISK_DASHBOARD'     && <RiskRadar />}
+      {currentView === 'RISK_FAILURES'      && <FailureMonitor />}
       {currentView === 'RISK_TRANSACTIONS'  && <RiskTransactionsList />}
       {currentView === 'RISK_QUARANTINE'    && <QuarantineCenter />}
       {currentView === 'RISK_RULE_ENGINE'   && <RuleEngine />}
