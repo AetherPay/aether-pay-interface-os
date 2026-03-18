@@ -123,13 +123,31 @@ En dessous du Sankey, une **table d'efficacité** résume pour chaque corridor :
 
 ### 2.2 Module : Risk & Fraud (`RISK`)
 
-**Risk Dashboard (`RISK_DASHBOARD`)**
+**Risk Radar (`RISK_DASHBOARD`)**
 C'est le panneau de contrôle de l'IA Cortex.
 Techniquement, il affiche les scores de risque globaux et l'efficacité des modèles de Machine Learning.
 Le but est de surveiller le taux de fraude actuel par rapport aux seuils acceptables.
 L'UI présente des jauges de température indiquant le niveau de menace par région.
 En un coup d'œil, le CCO peut voir si les attaques sont sous contrôle.
 Le résultat est une gestion proactive du risque financier.
+
+**Description : Implémentation actuelle — Placeholder**
+En construction. Affiche un écran "En construction · Cortex ML" en attendant l'intégration du moteur de scoring ML.
+
+---
+
+**Failure Monitor (`RISK_FAILURES`)**
+Monitoring opérationnel des échecs de transactions en temps réel.
+Techniquement, il agrège les transactions en statut `failed` depuis la base de données pour calculer des métriques de fiabilité des corridors.
+Le but est de détecter rapidement une dégradation d'un corridor de paiement avant qu'elle n'impacte les marchands.
+L'UI présente 5 KPI cards (niveau de risque global, taux d'échec, count failed, montant à risque, bloquées aujourd'hui), un graphique de taux d'échec sur 30 jours, un breakdown par corridor avec barres colorées, et un tableau des 10 dernières transactions échouées.
+Les données sont branchées sur l'endpoint backend `GET /v1/admin/risk/dashboard`.
+
+**Description : Implémentation actuelle — Données réelles**
+- **5 KPI cards** : Niveau de risque (Nominal/Modéré/Élevé/Critique selon seuils 1%/2%/5%), taux d'échec %, count transactions échouées, montant total à risque (€), transactions bloquées aujourd'hui.
+- **Graphique AreaChart** : taux d'échec jour par jour sur les 30 derniers jours (dataKey `taux`).
+- **Breakdown par corridor** : liste triée par taux d'échec décroissant avec barre de progression colorée (vert < 2%, orange 2–5%, rouge ≥ 5%).
+- **Tableau des échecs récents** : 10 dernières transactions `failed` avec marchand, méthode, montant, raison d'échec, date/heure.
 
 **Transactions (`RISK_TRANSACTIONS`)**
 Liste exhaustive de chaque flux traité avec son score de risque individuel.

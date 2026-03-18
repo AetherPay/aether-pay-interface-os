@@ -59,6 +59,7 @@ async function apiFetch<T>(
 export const dashboardApi = {
   getKPIs: () => apiFetch<any>('/v1/admin/dashboard'),
   getFlux: () => apiFetch<any[]>('/v1/admin/flux'),
+  getRiskDashboard: () => apiFetch<any>('/v1/admin/risk/dashboard'),
 };
 
 // ==================== MERCHANTS ====================

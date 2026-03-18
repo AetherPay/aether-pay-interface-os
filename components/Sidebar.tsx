@@ -33,6 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, toggleS
       group: 'Risk & Fraud', id: 'RISK', icon: ShieldAlert,
       items: [
         { id: 'RISK_DASHBOARD', label: 'Risk Radar' },
+        { id: 'RISK_FAILURES', label: 'Failure Monitor' },
         { id: 'RISK_TRANSACTIONS', label: 'Transactions at Risk' },
         { id: 'RISK_QUARANTINE', label: 'Quarantine Center' },
         { id: 'RISK_RULE_ENGINE', label: 'Rule Engine' },
