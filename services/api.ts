@@ -284,6 +284,48 @@ export const profileApi = {
     }),
 };
 
+// ==================== PLANS ====================
+
+export const plansApi = {
+  list: () => apiFetch<any[]>('/v1/admin/plans'),
+
+  create: (dto: {
+    name: string; slug: string; price: number; currency?: string;
+    color?: string; icon?: string; features: string[]; billingCycles: string[];
+    limitCollabs: number; limitTxns: number; limitLinks: number;
+    visibility?: string; isActive?: boolean; sortOrder?: number; merchantIds?: string[];
+  }) => apiFetch<any>('/v1/admin/plans', { method: 'POST', body: JSON.stringify(dto) }),
+
+  update: (id: string, dto: Partial<Parameters<typeof plansApi.create>[0]>) =>
+    apiFetch<any>(`/v1/admin/plans/${id}`, { method: 'PATCH', body: JSON.stringify(dto) }),
+
+  delete: (id: string) =>
+    apiFetch<any>(`/v1/admin/plans/${id}`, { method: 'DELETE' }),
+};
+
+// ==================== MERCHANT SUBSCRIPTIONS (ADMIN) ====================
+
+export const merchantSubscriptionsApi = {
+  list: () => apiFetch<any[]>('/v1/admin/subscriptions/merchants'),
+
+  changePlan: (merchantId: string, planId: string, billingCycle: string) =>
+    apiFetch<any>(`/v1/admin/subscriptions/${merchantId}/change-plan`, {
+      method: 'POST',
+      body: JSON.stringify({ planId, billingCycle }),
+    }),
+
+  suspend: (merchantId: string, reason: string, note?: string) =>
+    apiFetch<any>(`/v1/admin/subscriptions/${merchantId}/suspend`, {
+      method: 'POST',
+      body: JSON.stringify({ reason, note }),
+    }),
+
+  activate: (merchantId: string) =>
+    apiFetch<any>(`/v1/admin/subscriptions/${merchantId}/activate`, {
+      method: 'POST',
+    }),
+};
+
 // ==================== REFERENCE DATA ====================
 
 export const referenceApi = {
@@ -308,6 +350,8 @@ export const api = {
   impersonation: impersonationApi,
   profile: profileApi,
   reference: referenceApi,
+  plans: plansApi,
+  merchantSubscriptions: merchantSubscriptionsApi,
 };
 
 export default api;
