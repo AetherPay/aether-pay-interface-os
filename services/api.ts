@@ -293,6 +293,145 @@ export const referenceApi = {
   healthCheck: () => apiFetch<any>('/v1/shared/health'),
 };
 
+
+// ==================== PLANS (Admin CRUD) ======================================
+ 
+export interface CreatePlanPayload {
+  name: string;
+  slug: string;
+  price: number;
+  currency?: string;
+  billingCycle?: 'monthly' | 'yearly';
+  features: string[];
+  limits: { collaborators: number; transactions: number; links: number };
+  isActive?: boolean;
+  sortOrder?: number;
+}
+ 
+export interface UpdatePlanPayload {
+  name?: string;
+  price?: number;
+  currency?: string;
+  features?: string[];
+  limits?: { collaborators: number; transactions: number; links: number };
+  isActive?: boolean;
+  sortOrder?: number;
+}
+ 
+export const plansApi = {
+  /**
+   * Liste tous les plans (admin — tous statuts + compteur marchands)
+   * GET /v1/admin/plans
+   */
+  list: () => apiFetch<any[]>('/v1/admin/plans'),
+ 
+  /**
+   * Crée un plan
+   * POST /v1/admin/plans
+   */
+  create: (dto: CreatePlanPayload) =>
+    apiFetch<any>('/v1/admin/plans', {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    }),
+ 
+  /**
+   * Modifie un plan
+   * PATCH /v1/admin/plans/:planId
+   */
+  update: (planId: string, dto: UpdatePlanPayload) =>
+    apiFetch<any>(`/v1/admin/plans/${planId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(dto),
+    }),
+ 
+  /**
+   * Supprime un plan (échoue si marchands actifs)
+   * DELETE /v1/admin/plans/:planId
+   */
+  delete: (planId: string) =>
+    apiFetch<void>(`/v1/admin/plans/${planId}`, { method: 'DELETE' }),
+};
+ 
+// ==================== SUBSCRIPTIONS (Admin — gestion marchands) ==============
+ 
+export interface AdminChangePlanPayload {
+  planId: string;
+  billingCycle?: 'monthly' | 'yearly';
+  note?: string;
+}
+ 
+export interface SuspendPlanPayload {
+  reason: string;
+  note?: string;
+}
+ 
+export const subscriptionsAdminApi = {
+  /**
+   * Liste tous les abonnements avec filtres
+   * GET /v1/admin/subscriptions
+   */
+  list: (filters: {
+    planId?: string;
+    status?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  } = {}) => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([k, v]) => {
+      if (v !== undefined) params.append(k, String(v));
+    });
+    return apiFetch<any>(`/v1/admin/subscriptions?${params}`);
+  },
+ 
+  /**
+   * Abonnement actuel d'un marchand
+   * GET /v1/admin/merchants/:merchantId/subscription
+   */
+  getMerchantSubscription: (merchantId: string) =>
+    apiFetch<any>(`/v1/admin/merchants/${merchantId}/subscription`),
+ 
+  /**
+   * Historique abonnements d'un marchand
+   * GET /v1/admin/merchants/:merchantId/subscription/history
+   */
+  getMerchantHistory: (merchantId: string, limit = 20, offset = 0) =>
+    apiFetch<any>(
+      `/v1/admin/merchants/${merchantId}/subscription/history?limit=${limit}&offset=${offset}`,
+    ),
+ 
+  /**
+   * Change le plan d'un marchand
+   * PATCH /v1/admin/merchants/:merchantId/plan
+   */
+  changeMerchantPlan: (merchantId: string, dto: AdminChangePlanPayload) =>
+    apiFetch<any>(`/v1/admin/merchants/${merchantId}/plan`, {
+      method: 'PATCH',
+      body: JSON.stringify(dto),
+    }),
+ 
+  /**
+   * Suspend le plan d'un marchand (motif obligatoire)
+   * POST /v1/admin/merchants/:merchantId/plan/suspend
+   */
+  suspendMerchantPlan: (merchantId: string, dto: SuspendPlanPayload) =>
+    apiFetch<any>(`/v1/admin/merchants/${merchantId}/plan/suspend`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    }),
+ 
+  /**
+   * Réactive le plan d'un marchand suspendu
+   * POST /v1/admin/merchants/:merchantId/plan/activate
+   */
+  activateMerchantPlan: (merchantId: string) =>
+    apiFetch<any>(`/v1/admin/merchants/${merchantId}/plan/activate`, {
+      method: 'POST',
+    }),
+};
+
+
 // Export all APIs
 export const api = {
   dashboard: dashboardApi,
@@ -308,6 +447,8 @@ export const api = {
   impersonation: impersonationApi,
   profile: profileApi,
   reference: referenceApi,
+  plans: plansApi,
+  subscriptions: subscriptionsAdminApi,
 };
 
 export default api;
