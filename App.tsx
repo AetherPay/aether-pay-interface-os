@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ViewState } from './types';
 
@@ -24,6 +23,11 @@ import MakerCheckerQueue from './components/MakerCheckerQueue';
 import TreasuryView from './components/TreasuryView';
 import AetherShipView from './components/AetherShipView';
 
+// ── Nouveaux modules Plans & Subscriptions ────────────────────────────────────
+import PlanManagerView from './components/PlanManagerView';
+import MerchantPlansView from './components/MerchantPlansView';
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Data
 import { architectureChecklist } from './services/mockData';
 import { AlertTriangle, X } from 'lucide-react';
@@ -37,7 +41,6 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isImpersonating, setImpersonating] = useState(false);
   const [isDarkMode, setDarkMode] = useState(document.documentElement.classList.contains('dark'));
-
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -90,6 +93,11 @@ function App() {
     
     if (currentView.startsWith('PROTOCOL_')) return <MakerCheckerQueue />;
 
+    // ── Plans & Subscriptions ─────────────────────────────────────────────────
+    if (currentView === 'PLANS_MANAGER') return <PlanManagerView />;
+    if (currentView === 'PLANS_MERCHANTS') return <MerchantPlansView />;
+    // ─────────────────────────────────────────────────────────────────────────
+
     switch (currentView) {
       case 'SETTINGS': return <SettingsView />;
       case 'PROFILE': return <ProfileView />;
@@ -97,7 +105,6 @@ function App() {
       default: return <DashboardView setView={setView} currentView={currentView} />;
     }
   };
-
 
   return (
     <div className={`flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans text-slate-900 dark:text-slate-200 selection:bg-indigo-100 dark:selection:bg-indigo-500/50 transition-colors duration-500`}>
