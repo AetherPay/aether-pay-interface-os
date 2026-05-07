@@ -1,10 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Activity, ShieldAlert, Landmark, Headphones, Server, ClipboardList, Settings,
   Zap, UserCheck, FileCheck, Scale, Globe, Code, BarChart3, ShieldCheck, 
   User as UserIcon, Package, LogOut, ChevronDown, Users, ChevronLeft, 
-  ChevronRight, Truck, Fingerprint, Rocket, Link as LinkIcon, Radio, BrainCircuit
+  ChevronRight, Truck, Fingerprint, Rocket, Link as LinkIcon, Radio, BrainCircuit,
+  // Nouvelles icônes pour Plans & Subscriptions
+  CreditCard, LayoutGrid
 } from 'lucide-react';
 import { ViewState } from '../types';
 
@@ -24,6 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, toggleS
       items: [
         { id: 'COMMAND_GLOBAL_OVERVIEW', label: 'Global Overview' },
         { id: 'COMMAND_LIVE_MAP', label: 'Live Transaction Map' },
+        { id: 'COMMAND_ZONE_FLUX', label: 'Zone Flux' },
         { id: 'COMMAND_ALERTS', label: 'Alerts & Incidents' },
         { id: 'COMMAND_EXECUTIVE_REPORTS', label: 'Executive Reports' },
       ]
@@ -32,6 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, toggleS
       group: 'Risk & Fraud', id: 'RISK', icon: ShieldAlert,
       items: [
         { id: 'RISK_DASHBOARD', label: 'Risk Radar' },
+        { id: 'RISK_FAILURES', label: 'Failure Monitor' },
         { id: 'RISK_TRANSACTIONS', label: 'Transactions at Risk' },
         { id: 'RISK_QUARANTINE', label: 'Quarantine Center' },
         { id: 'RISK_RULE_ENGINE', label: 'Rule Engine' },
@@ -70,6 +73,17 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, toggleS
         { id: 'OPS_AETHERLINK', label: 'AetherLink Manager' },
       ]
     },
+
+    // ── NOUVEAU GROUPE ────────────────────────────────────────────────────────
+    {
+      group: 'Plans & Subscriptions', id: 'PLANS', icon: CreditCard,
+      items: [
+        { id: 'PLANS_MANAGER', label: 'Plan Manager' },
+        { id: 'PLANS_MERCHANTS', label: 'Merchant Plans' },
+      ]
+    },
+    // ─────────────────────────────────────────────────────────────────────────
+
     {
       group: 'Logistics', id: 'SHIP', icon: Truck,
       items: [
@@ -142,6 +156,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, toggleS
         {departments.map((dept) => {
           const isExpanded = expandedGroup === dept.id;
           const isGroupActive = currentView.startsWith(dept.id);
+
+          // Badge "NEW" pour le groupe Plans
+          const isNew = dept.id === 'PLANS';
+
           return (
             <div key={dept.id} className="relative group">
               <button
@@ -154,10 +172,15 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, toggleS
                     : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50'}
                 `}
               >
-                <dept.icon className={`transition-all duration-300 ${isOpen ? 'mr-3 h-4 w-4' : 'h-6 w-6'} ${isGroupActive ? 'text-indigo-600' : 'text-slate-400'}`} />
+                <dept.icon className={`transition-all duration-300 ${isOpen ? 'mr-3 h-4 w-4' : 'h-6 w-6'} ${isGroupActive ? 'text-indigo-600' : isNew ? 'text-indigo-400' : 'text-slate-400'}`} />
                 {isOpen && (
                   <>
                     <span className="text-[11px] font-black uppercase tracking-widest flex-1 text-left">{dept.group}</span>
+                    {isNew && (
+                      <span className="mr-2 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                        NEW
+                      </span>
+                    )}
                     <ChevronDown className={`h-3 w-3 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
                   </>
                 )}

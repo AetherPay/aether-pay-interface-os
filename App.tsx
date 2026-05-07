@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ViewState } from './types';
 
@@ -14,7 +13,6 @@ import KYCView from './components/KYCView';
 import ComplianceView from './components/ComplianceView';
 import SupportView from './components/SupportView';
 import NetworkView from './components/NetworkView';
-import DevApiView from './components/DevApiView';
 import FinanceView from './components/FinanceView';
 import ReportingView from './components/ReportingView';
 import SystemAdminView from './components/SystemAdminView';
@@ -25,30 +23,24 @@ import MakerCheckerQueue from './components/MakerCheckerQueue';
 import TreasuryView from './components/TreasuryView';
 import AetherShipView from './components/AetherShipView';
 
+// ── Nouveaux modules Plans & Subscriptions ────────────────────────────────────
+import PlanManagerView from './components/PlanManagerView';
+import MerchantPlansView from './components/MerchantPlansView';
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Data
-import { generateTransactions, warRoomKPIs, chartData, architectureChecklist, liveFeedData } from './services/mockData';
+import { architectureChecklist } from './services/mockData';
 import { AlertTriangle, X } from 'lucide-react';
+import DevApiView from './components/engineering/DevApiView';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => localStorage.getItem('aetherpay:auth') === 'true'
+  );
   const [currentView, setView] = useState<ViewState>('COMMAND_GLOBAL_OVERVIEW');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [data, setData] = useState(generateTransactions(20));
   const [isImpersonating, setImpersonating] = useState(false);
   const [isDarkMode, setDarkMode] = useState(document.documentElement.classList.contains('dark'));
-
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    
-    const interval = setInterval(() => {
-      setData(prev => {
-        const newTxn = generateTransactions(1)[0];
-        return [newTxn, ...prev.slice(0, 19)];
-      });
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [isAuthenticated]);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -65,12 +57,12 @@ function App() {
   };
 
   if (!isAuthenticated) {
-    return <AuthLogin onAuthenticated={() => setIsAuthenticated(true)} />;
+    return <AuthLogin onAuthenticated={() => { localStorage.setItem('aetherpay:auth', 'true'); setIsAuthenticated(true); }} />;
   }
   
   const renderContent = () => {
     if (currentView.startsWith('COMMAND_')) {
-      return <DashboardView kpis={warRoomKPIs} chartData={chartData} liveFeedData={liveFeedData} transactions={data} setView={setView} currentView={currentView} />;
+      return <DashboardView setView={setView} currentView={currentView} />;
     }
 
     if (currentView.startsWith('RISK_')) return <RiskView currentView={currentView} />;
@@ -101,14 +93,18 @@ function App() {
     
     if (currentView.startsWith('PROTOCOL_')) return <MakerCheckerQueue />;
 
+    // ── Plans & Subscriptions ─────────────────────────────────────────────────
+    if (currentView === 'PLANS_MANAGER') return <PlanManagerView />;
+    if (currentView === 'PLANS_MERCHANTS') return <MerchantPlansView />;
+    // ─────────────────────────────────────────────────────────────────────────
+
     switch (currentView) {
       case 'SETTINGS': return <SettingsView />;
       case 'PROFILE': return <ProfileView />;
       case 'CHECKLIST': return <Checklist items={architectureChecklist as any} />;
-      default: return <DashboardView kpis={warRoomKPIs} chartData={chartData} liveFeedData={liveFeedData} transactions={data} setView={setView} currentView={currentView} />;
+      default: return <DashboardView setView={setView} currentView={currentView} />;
     }
   };
-
 
   return (
     <div className={`flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans text-slate-900 dark:text-slate-200 selection:bg-indigo-100 dark:selection:bg-indigo-500/50 transition-colors duration-500`}>
@@ -131,7 +127,7 @@ function App() {
           toggleSidebar={toggleSidebar} 
           setView={setView} 
           currentView={currentView}
-          logout={() => setIsAuthenticated(false)}
+          logout={() => { localStorage.removeItem('aetherpay:auth'); setIsAuthenticated(false); }}
           isDarkMode={isDarkMode}
           toggleDarkMode={toggleDarkMode}
         />
